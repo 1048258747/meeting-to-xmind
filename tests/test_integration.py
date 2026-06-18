@@ -48,7 +48,7 @@ def test_full_workflow_without_llm(tmp_path):
         content = zf.read("content.xml").decode("utf-8")
         assert "Project Weekly Meeting" in content
         assert "Project Progress" in content
-        assert "Issues & Risks" in content
+        assert "Issues &amp; Risks" in content
         assert "Fix login bug" in content
         assert "@Zhang San" in content
 
