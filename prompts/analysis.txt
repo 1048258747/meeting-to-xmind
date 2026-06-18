@@ -1,0 +1,27 @@
+Analyze this meeting transcript and return a JSON object with the following structure:
+{
+  "title": "Meeting title (extract from content or generate based on main topic)",
+  "date": "Meeting date (if mentioned, format: YYYY-MM-DD)",
+  "topics": [
+    {
+      "name": "Topic name (main discussion point)",
+      "subtopics": [
+        {"name": "Subtopic name", "content": "Detailed content or conclusion"}
+      ]
+    }
+  ],
+  "action_items": [
+    {
+      "task": "Task description",
+      "assignee": "Person name (if mentioned)",
+      "deadline": "Date if mentioned, otherwise null"
+    }
+  ]
+}
+
+Guidelines:
+- Extract all main discussion topics from the meeting
+- For each topic, identify key discussion points, decisions, and conclusions
+- Extract all action items with assignees when mentioned
+- If the meeting has a clear title in the transcript, use it; otherwise generate one
+- Return only valid JSON, no additional text
