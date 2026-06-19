@@ -61,14 +61,3 @@ Extract all main topics, discussion points, conclusions, and action items."""
     
     async def close(self):
         await self._client.aclose()
-    
-    def __del__(self):
-        try:
-            import asyncio
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                loop.create_task(self.close())
-            else:
-                loop.run_until_complete(self.close())
-        except:
-            pass
