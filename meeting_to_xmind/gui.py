@@ -12,10 +12,19 @@ class MeetingToXmindGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("会议记录转 XMind")
-        self.root.geometry("600x500")
+        self.root.geometry("700x600")
         self.root.resizable(True, True)
         
+        # 设置样式
+        style = ttk.Style()
+        style.configure("TButton", padding=6)
+        style.configure("TLabel", padding=4)
+        
         self._create_widgets()
+        
+        # 绑定快捷键
+        self.root.bind("<Control-o>", lambda e: self._browse_file())
+        self.root.bind("<Control-s>", lambda e: self._browse_output_dir())
     
     def _create_widgets(self):
         # 输入区域框架
@@ -66,6 +75,9 @@ class MeetingToXmindGUI:
         btn_frame = ttk.Frame(self.root, padding=10)
         btn_frame.pack(fill=tk.X)
         
+        self.clear_btn = ttk.Button(btn_frame, text="清空", command=self._on_clear)
+        self.clear_btn.pack(side=tk.LEFT, padx=(0, 10))
+        
         self.generate_btn = ttk.Button(btn_frame, text="生成 XMind 文件", command=self._on_generate)
         self.generate_btn.pack()
         
@@ -88,6 +100,11 @@ class MeetingToXmindGUI:
         dirname = filedialog.askdirectory()
         if dirname:
             self.output_dir_var.set(dirname)
+
+    def _on_clear(self):
+        self.text_input.delete("1.0", tk.END)
+        self.file_path_var.set("")
+        self.status_var.set("已清空")
 
     def _on_generate(self):
         # 获取输入内容
