@@ -58,6 +58,18 @@ class MeetingToXmindGUI:
         self.split_var = tk.BooleanVar(value=False)
         self.split_check = ttk.Checkbutton(output_frame, text="按主题拆分为多个文件", variable=self.split_var)
         self.split_check.pack(anchor=tk.W, pady=(10, 0))
+        
+        # 操作按钮框架
+        btn_frame = ttk.Frame(self.root, padding=10)
+        btn_frame.pack(fill=tk.X)
+        
+        self.generate_btn = ttk.Button(btn_frame, text="生成 XMind 文件", command=self._on_generate)
+        self.generate_btn.pack()
+        
+        # 状态栏
+        self.status_var = tk.StringVar(value="就绪")
+        self.status_bar = ttk.Label(self.root, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
+        self.status_bar.pack(fill=tk.X, side=tk.BOTTOM, padx=10, pady=5)
 
     def _browse_file(self):
         filetypes = [
@@ -73,6 +85,9 @@ class MeetingToXmindGUI:
         dirname = filedialog.askdirectory()
         if dirname:
             self.output_dir_var.set(dirname)
+
+    def _on_generate(self):
+        pass
 
 def main():
     root = tk.Tk()
