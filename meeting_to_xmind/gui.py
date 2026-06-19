@@ -170,8 +170,9 @@ class MeetingToXmindGUI:
             self.root.after(0, lambda: messagebox.showinfo("完成", "XMind 文件生成成功！"))
         
         except Exception as e:
-            self.root.after(0, lambda: self.status_var.set(f"错误：{e}"))
-            self.root.after(0, lambda: messagebox.showerror("错误", f"生成失败：{e}"))
+            error_msg = str(e)
+            self.root.after(0, lambda msg=error_msg: self.status_var.set(f"错误：{msg}"))
+            self.root.after(0, lambda msg=error_msg: messagebox.showerror("错误", f"生成失败：{msg}"))
         
         finally:
             self.root.after(0, lambda: self.generate_btn.config(state="normal"))
