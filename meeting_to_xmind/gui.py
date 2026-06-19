@@ -3,7 +3,6 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import threading
 import asyncio
-import sys
 from pathlib import Path
 from meeting_to_xmind.config import Config
 from meeting_to_xmind.analyzer import MeetingAnalyzer
@@ -111,11 +110,15 @@ class MeetingToXmindGUI:
         self.generate_btn.config(state="disabled")
         self.status_var.set("正在分析会议记录...")
         
+        # 在主线程收集所有widget值（线程安全）
+        output_dir = self.output_dir_var.get()
+        split = self.split_var.get()
+        
         # 在新线程中执行
-        thread = threading.Thread(target=self._generate_worker, args=(content,), daemon=True)
+        thread = threading.Thread(target=self._generate_worker, args=(content, output_dir, split), daemon=True)
         thread.start()
 
-    def _generate_worker(self, content):
+    def _generate_worker(self, content, output_dir, split):
         try:
             # 加载配置
             config_path = Path("config.json")
@@ -130,19 +133,20 @@ class MeetingToXmindGUI:
             asyncio.set_event_loop(loop)
             result = loop.run_until_complete(analyzer.analyze(content))
             loop.run_until_complete(analyzer.close())
+            loop.close()
             
             # 生成 XMind
             generator = XMindGenerator()
-            output_dir = Path(self.output_dir_var.get())
-            output_dir.mkdir(parents=True, exist_ok=True)
+            output_path = Path(output_dir)
+            output_path.mkdir(parents=True, exist_ok=True)
             
-            if self.split_var.get():
+            if split:
                 files_data = MeetingAnalyzer.split_for_output(result)
-                generator.generate_multiple(files_data, output_dir)
+                generator.generate_multiple(files_data, output_path)
                 self.root.after(0, lambda: self.status_var.set(f"生成完成！共 {len(files_data)} 个文件"))
             else:
                 filename = f"{result.get('title', 'meeting')}.xmind"
-                output_file = output_dir / filename
+                output_file = output_path / filename
                 generator.generate(result, output_file)
                 self.root.after(0, lambda: self.status_var.set(f"生成完成：{output_file}"))
             
