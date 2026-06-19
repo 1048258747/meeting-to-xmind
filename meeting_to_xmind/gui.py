@@ -2,8 +2,12 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import threading
+import asyncio
 import sys
 from pathlib import Path
+from meeting_to_xmind.config import Config
+from meeting_to_xmind.analyzer import MeetingAnalyzer
+from meeting_to_xmind.xmind_generator import XMindGenerator
 
 class MeetingToXmindGUI:
     def __init__(self, root):
@@ -87,7 +91,69 @@ class MeetingToXmindGUI:
             self.output_dir_var.set(dirname)
 
     def _on_generate(self):
-        pass
+        # 获取输入内容
+        content = self.text_input.get("1.0", tk.END).strip()
+        file_path = self.file_path_var.get()
+        
+        if not content and not file_path:
+            messagebox.showwarning("警告", "请输入会议记录内容或选择文件")
+            return
+        
+        # 如果有文件，读取文件内容
+        if file_path and not content:
+            try:
+                content = Path(file_path).read_text(encoding="utf-8")
+            except Exception as e:
+                messagebox.showerror("错误", f"读取文件失败：{e}")
+                return
+        
+        # 禁用按钮，更新状态
+        self.generate_btn.config(state="disabled")
+        self.status_var.set("正在分析会议记录...")
+        
+        # 在新线程中执行
+        thread = threading.Thread(target=self._generate_worker, args=(content,), daemon=True)
+        thread.start()
+
+    def _generate_worker(self, content):
+        try:
+            # 加载配置
+            config_path = Path("config.json")
+            if config_path.exists():
+                config = Config.from_file(config_path)
+            else:
+                config = Config.from_env()
+            
+            # 分析内容
+            analyzer = MeetingAnalyzer(config)
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(analyzer.analyze(content))
+            loop.run_until_complete(analyzer.close())
+            
+            # 生成 XMind
+            generator = XMindGenerator()
+            output_dir = Path(self.output_dir_var.get())
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            if self.split_var.get():
+                files_data = MeetingAnalyzer.split_for_output(result)
+                generator.generate_multiple(files_data, output_dir)
+                self.root.after(0, lambda: self.status_var.set(f"生成完成！共 {len(files_data)} 个文件"))
+            else:
+                filename = f"{result.get('title', 'meeting')}.xmind"
+                output_file = output_dir / filename
+                generator.generate(result, output_file)
+                self.root.after(0, lambda: self.status_var.set(f"生成完成：{output_file}"))
+            
+            self.root.after(0, lambda: messagebox.showinfo("完成", "XMind 文件生成成功！"))
+        
+        except Exception as e:
+            self.root.after(0, lambda: self.status_var.set(f"错误：{e}"))
+            self.root.after(0, lambda: messagebox.showerror("错误", f"生成失败：{e}"))
+        
+        finally:
+            self.root.after(0, lambda: self.generate_btn.config(state="normal"))
 
 def main():
     root = tk.Tk()
